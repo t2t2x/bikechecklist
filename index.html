@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bike Service Checklist</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #888;
+    --red: #ff4444;
+    --green: #44ff88;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--accent);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .title-block h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 2.6rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .title-block p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .btn-save {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn-save:hover { background: #fff; transform: scale(1.03); }
+  .btn-save:active { transform: scale(0.97); }
+
+  /* META FIELDS */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .meta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .meta-field label {
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .meta-field input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--accent);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.92rem;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .meta-field input:focus { border-color: var(--accent2); }
+
+  /* SERVICE LEVEL BADGES */
+  .level-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .level-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .level-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+  }
+  .level-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .level-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+
+  /* MAIN GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  /* SECTION CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--surface2);
+    padding: 10px 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+  }
+  .card-header .icon { font-size: 1rem; }
+
+  .card-body { padding: 8px 0; }
+
+  /* ROW */
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    min-height: 38px;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-row:hover { background: var(--surface2); }
+
+  .check-row .row-label {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 500;
+    user-select: none;
+  }
+
+  /* Checkbox */
+  .chk {
+    width: 20px; height: 20px;
+    min-width: 20px;
+    appearance: none;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    clip-path: polygon(3px 0%, 100% 0%, calc(100% - 3px) 100%, 0% 100%);
+  }
+  .chk:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .chk:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 900;
+    color: #000;
+  }
+
+  /* Inline text input inside row */
+  .row-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.82rem;
+    padding: 2px 6px;
+    width: 90px;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+  }
+  .row-input:focus { border-bottom-color: var(--accent); }
+  .row-input::placeholder { color: var(--muted); font-size: 0.75rem; }
+
+  .dual-inputs { display: flex; gap: 6px; }
+  .dual-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    align-self: center;
+  }
+
+  /* Notes */
+  .notes-section { margin-top: 20px; }
+  .notes-section label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .notes-section textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--accent2);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.88rem;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+    min-height: 90px;
+    transition: border-color 0.2s;
+  }
+  .notes-section textarea:focus { border-color: var(--accent); }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    min-width: 52px;
+    text-align: right;
+  }
+
+  /* PRINT / PDF OVERRIDES */
+  @media print {
+    body { background: #fff; color: #000; padding: 12px; }
+    .topbar { border-bottom-color: #222; }
+    .title-block h1 { color: #000; }
+    .btn-save, .level-selector { display: none !important; }
+    .card { border-top-color: #222; background: #fff; border-color: #ccc; }
+    .card-header { background: #f0f0f0; color: #000; }
+    .check-row:hover { background: transparent; }
+    .progress-bar-wrap { display: none; }
+    .chk:checked { background: #333; border-color: #333; }
+    .chk:checked::after { color: #fff; }
+    .meta-field input, .row-input, .notes-section textarea {
+      background: transparent; border-color: #aaa; color: #000;
+    }
+    .row-label, .meta-field label, .dual-label { color: #333; }
+    .card-header .icon { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="title-block">
+    <h1>Bike Service Checklist</h1>
+    <p>Workshop Inspection &amp; Torque Specification Record</p>
+  </div>
+  <button class="btn-save" onclick="savePDF()">⬇ Save as PDF</button>
+</div>
+
+<!-- META FIELDS -->
+<div class="meta-grid" id="meta">
+  <div class="meta-field">
+    <label>Client Name</label>
+    <input type="text" id="clientName" placeholder="Enter client name" />
+  </div>
+  <div class="meta-field">
+    <label>Bike Model</label>
+    <input type="text" id="bikeModel" placeholder="e.g. Trek Domane SL6" />
+  </div>
+  <div class="meta-field">
+    <label>Service By</label>
+    <input type="text" id="serviceBy" placeholder="Technician name" />
+  </div>
+  <div class="meta-field">
+    <label>Inspection Date</label>
+    <input type="date" id="inspDate" />
+  </div>
+</div>
+
+<!-- LEVEL SELECTOR -->
+<div class="level-selector">
+  <span class="level-label">Service Level:</span>
+  <button class="level-btn" onclick="setLevel(1,this)">Level 1 — Service</button>
+  <button class="level-btn" onclick="setLevel(2,this)">Level 2 — Service</button>
+  <button class="level-btn active" onclick="setLevel(3,this)">Level 3 — Bike Assembly</button>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText">0 / 0</div>
+</div>
+
+<!-- CHECKLIST GRID -->
+<div class="grid" id="checklistGrid"></div>
+
+<!-- NOTES -->
+<div class="notes-section" style="margin-top:20px;">
+  <label>Additional Notes / Observations</label>
+  <textarea id="notes" placeholder="Enter any additional notes, observations, or follow-up actions here..."></textarea>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const sections = [
+  {
+    title: "Torqued Specification (Bolts)",
+    icon: "🔩",
+    items: [
+      { label: "Shifters", type: "check" },
+      { label: "Handle / Stem Bolts", type: "check" },
+      { label: "Stem Steerer", type: "check" },
+      { label: "Top Cap", type: "check" },
+      { label: "Saddle", type: "check" },
+      { label: "Seat Post", type: "check" },
+      { label: "Brake Caliper", type: "check" },
+      { label: "Rim Brake Pads", type: "check" },
+      { label: "Brake Pinch Bolts", type: "check" },
+      { label: "Pedals", type: "check" },
+      { label: "Thru Axles", type: "check" },
+      { label: "Cassette", type: "check" },
+      { label: "Rotors", type: "check" },
+      { label: "Front Derailleur Mount", type: "check" },
+      { label: "FD Cable Pinch Bolt", type: "check" },
+      { label: "Rear Derailleur Mount", type: "check" },
+      { label: "RD Cable Pinch Bolt", type: "check" },
+      { label: "RD Pulley Wheels", type: "check" },
+      { label: "Bottle Cage", type: "check" },
+      { label: "Crank Arm Bolt", type: "check" },
+      { label: "Chain Ring Bolts", type: "check" },
+      { label: "Sram Preload Bolt", type: "check" },
+    ]
+  },
+  {
+    title: "Drive Train",
+    icon: "⚙️",
+    items: [
+      { label: "Limit Screws — Front", type: "check" },
+      { label: "Limit Screws — Rear", type: "check" },
+      { label: "Indexing — Front", type: "check" },
+      { label: "Indexing — Rear", type: "check" },
+      { label: "Chain Wear", type: "check" },
+      { label: "Chain Size", type: "input", placeholder: "e.g. 11s" },
+      { label: "Lubrication", type: "check" },
+      { label: "Crankset Play", type: "check" },
+    ]
+  },
+  {
+    title: "Brakes",
+    icon: "🛑",
+    items: [
+      { label: "No Brake Rub", type: "check" },
+      { label: "No Brakes Squeal", type: "check" },
+      { label: "Rim Brakes Pads Toe-in", type: "check" },
+      { label: "Brake Pad Thickness — Front", type: "input", placeholder: "mm" },
+      { label: "Brake Pad Thickness — Rear", type: "input", placeholder: "mm" },
+      { label: "Rotor Disc Thickness — Front", type: "input", placeholder: "mm" },
+      { label: "Rotor Disc Thickness — Rear", type: "input", placeholder: "mm" },
+    ]
+  },
+  {
+    title: "Wheels",
+    icon: "🚲",
+    items: [
+      { label: "No Lateral Play", type: "check" },
+      { label: "Tyres Pressure (PSI)", type: "dual", labels: ["Front","Rear"] },
+      { label: "Tyres Beads Seated", type: "check" },
+      { label: "Valves Tightened", type: "check" },
+      { label: "Lateral True Within 1-2mm", type: "check" },
+      { label: "Tyres Direction", type: "check" },
+    ]
+  },
+  {
+    title: "Others",
+    icon: "🔧",
+    items: [
+      { label: "Headset Play", type: "check" },
+      { label: "Cables Crimped", type: "check" },
+      { label: "Handle Bar Alignment", type: "check" },
+      { label: "Saddle Alignment", type: "check" },
+    ]
+  },
+];
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+let uid = 0;
+function render() {
+  const grid = document.getElementById('checklistGrid');
+  grid.innerHTML = '';
+
+  sections.forEach(sec => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="icon">${sec.icon}</span>${sec.title}
+      </div>
+      <div class="card-body" id="body_${sec.title.replace(/\s/g,'_')}"></div>
+    `;
+    grid.appendChild(card);
+
+    const body = card.querySelector('.card-body');
+
+    sec.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'check-row';
+      uid++;
+
+      if (item.type === 'check') {
+        row.innerHTML = `
+          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
+          <label class="row-label" for="chk_${uid}">${item.label}</label>
+        `;
+      } else if (item.type === 'input') {
+        row.innerHTML = `
+          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
+          <label class="row-label" for="chk_${uid}">${item.label}</label>
+          <input class="row-input" type="text" placeholder="${item.placeholder || ''}" />
+        `;
+      } else if (item.type === 'dual') {
+        const l = item.labels || ['L','R'];
+        row.innerHTML = `
+          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
+          <label class="row-label" for="chk_${uid}">${item.label}</label>
+          <div class="dual-inputs">
+            <span class="dual-label">${l[0]}</span>
+            <input class="row-input" type="text" placeholder="PSI" style="width:60px" />
+            <span class="dual-label">${l[1]}</span>
+            <input class="row-input" type="text" placeholder="PSI" style="width:60px" />
+          </div>
+        `;
+      }
+      body.appendChild(row);
+    });
+  });
+
+  // Set today's date
+  document.getElementById('inspDate').valueAsDate = new Date();
+  updateProgress();
+}
+
+// ─── PROGRESS ────────────────────────────────────────────────────────────────
+function updateProgress() {
+  const all = document.querySelectorAll('.tracker');
+  const checked = document.querySelectorAll('.tracker:checked');
+  const pct = all.length ? Math.round((checked.length / all.length) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${checked.length} / ${all.length}`;
+}
+
+// ─── LEVEL ────────────────────────────────────────────────────────────────────
+function setLevel(n, btn) {
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─── PDF SAVE ─────────────────────────────────────────────────────────────────
+async function savePDF() {
+  const btn = document.querySelector('.btn-save');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const el = document.body;
+
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#0f0f0f',
+      ignoreElements: el => el.classList.contains('btn-save')
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    let y = 0;
+    while (y < imgH) {
+      if (y > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, -y, imgW, imgH);
+      y += pageH;
+    }
+
+    const client = document.getElementById('clientName').value || 'checklist';
+    const date = document.getElementById('inspDate').value || 'today';
+    pdf.save(`BikeChecklist_${client}_${date}.pdf`);
+  } catch(e) {
+    alert('PDF generation failed: ' + e.message);
+  }
+
+  btn.textContent = '⬇ Save as PDF';
+  btn.disabled = false;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
