@@ -8,7 +8,6 @@ html = r'''<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
   :root {
@@ -20,8 +19,6 @@ html = r'''<!DOCTYPE html>
     --accent2: #ff6b35;
     --text: #f0f0f0;
     --muted: #888;
-    --red: #ff4444;
-    --green: #44ff88;
   }
 
   * {
@@ -38,7 +35,6 @@ html = r'''<!DOCTYPE html>
     padding: 24px;
   }
 
-  /* TOP BAR */
   .topbar {
     display: flex;
     align-items: center;
@@ -80,35 +76,22 @@ html = r'''<!DOCTYPE html>
     padding: 12px 28px;
     cursor: pointer;
     clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
   }
 
   .btn-save:hover {
     background: #fff;
-    transform: scale(1.03);
-  }
-
-  .btn-save:active {
-    transform: scale(0.97);
   }
 
   .btn-save:disabled {
-    opacity: 0.65;
+    opacity: 0.6;
     cursor: wait;
   }
 
-  /* CONTENT CAPTURE AREA */
-  #pdfContent {
-    width: 100%;
-  }
-
-  /* META FIELDS */
   .meta-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
 
   .meta-field {
@@ -134,18 +117,12 @@ html = r'''<!DOCTYPE html>
     font-size: 0.92rem;
     padding: 7px 10px;
     outline: none;
-    transition: border-color 0.2s;
   }
 
-  .meta-field input:focus {
-    border-color: var(--accent2);
-  }
-
-  /* SERVICE LEVEL BADGES */
   .level-selector {
     display: flex;
     gap: 10px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     flex-wrap: wrap;
     align-items: center;
   }
@@ -155,22 +132,19 @@ html = r'''<!DOCTYPE html>
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-right: 4px;
   }
 
   .level-btn {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
     font-size: 0.82rem;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 6px 18px;
     border: 1px solid var(--border);
     background: var(--surface2);
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.15s;
-    clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
   }
 
   .level-btn.active {
@@ -179,19 +153,41 @@ html = r'''<!DOCTYPE html>
     border-color: var(--accent);
   }
 
-  .level-btn:hover:not(.active) {
-    border-color: var(--accent);
-    color: var(--text);
+  .progress-bar-wrap {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
 
-  /* MAIN GRID */
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+  }
+
+  .progress-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--accent);
+    min-width: 52px;
+    text-align: right;
+  }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
   }
 
-  /* SECTION CARD */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -207,28 +203,19 @@ html = r'''<!DOCTYPE html>
     font-size: 1rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 8px;
     color: var(--accent);
-  }
-
-  .card-header .icon {
-    font-size: 1rem;
   }
 
   .card-body {
     padding: 8px 0;
   }
 
-  /* ROW */
   .check-row {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 6px 16px;
     border-bottom: 1px solid var(--border);
-    transition: background 0.1s;
     min-height: 38px;
   }
 
@@ -236,19 +223,12 @@ html = r'''<!DOCTYPE html>
     border-bottom: none;
   }
 
-  .check-row:hover {
-    background: var(--surface2);
-  }
-
-  .check-row .row-label {
+  .row-label {
     flex: 1;
     font-size: 0.85rem;
-    color: var(--text);
     font-weight: 500;
-    user-select: none;
   }
 
-  /* Checkbox */
   .chk {
     width: 20px;
     height: 20px;
@@ -258,8 +238,6 @@ html = r'''<!DOCTYPE html>
     background: var(--bg);
     cursor: pointer;
     position: relative;
-    transition: all 0.15s;
-    clip-path: polygon(3px 0%, 100% 0%, calc(100% - 3px) 100%, 0% 100%);
   }
 
   .chk:checked {
@@ -268,17 +246,16 @@ html = r'''<!DOCTYPE html>
   }
 
   .chk:checked::after {
-    content: '✓';
+    content: "✓";
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -52%);
     font-size: 12px;
     font-weight: 900;
     color: #000;
   }
 
-  /* Inline text input inside row */
   .row-input {
     background: transparent;
     border: none;
@@ -289,32 +266,20 @@ html = r'''<!DOCTYPE html>
     padding: 2px 6px;
     width: 90px;
     outline: none;
-    transition: border-color 0.2s;
     text-align: center;
-  }
-
-  .row-input:focus {
-    border-bottom-color: var(--accent);
-  }
-
-  .row-input::placeholder {
-    color: var(--muted);
-    font-size: 0.75rem;
   }
 
   .dual-inputs {
     display: flex;
     gap: 6px;
+    align-items: center;
   }
 
   .dual-label {
     font-size: 0.7rem;
     color: var(--muted);
-    letter-spacing: 0.08em;
-    align-self: center;
   }
 
-  /* Notes */
   .notes-section {
     margin-top: 20px;
   }
@@ -331,6 +296,7 @@ html = r'''<!DOCTYPE html>
 
   .notes-section textarea {
     width: 100%;
+    min-height: 90px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-bottom: 2px solid var(--accent2);
@@ -340,203 +306,12 @@ html = r'''<!DOCTYPE html>
     padding: 12px;
     resize: vertical;
     outline: none;
-    min-height: 90px;
-    transition: border-color 0.2s;
-  }
-
-  .notes-section textarea:focus {
-    border-color: var(--accent);
-  }
-
-  /* PROGRESS */
-  .progress-bar-wrap {
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .progress-track {
-    flex: 1;
-    height: 6px;
-    background: var(--border);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: var(--accent);
-    transition: width 0.3s ease;
-    width: 0%;
-  }
-
-  .progress-text {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.88rem;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    min-width: 52px;
-    text-align: right;
-  }
-
-  /* TEMPORARY LAYOUT USED ONLY DURING PDF EXPORT */
-  body.pdf-export {
-    padding: 0;
-  }
-
-  body.pdf-export #pdfContent {
-    width: 1400px;
-    padding: 24px;
-    background: var(--bg);
-  }
-
-  body.pdf-export .meta-grid {
-    grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 18px;
-  }
-
-  body.pdf-export .level-selector {
-    margin-bottom: 18px;
-  }
-
-  body.pdf-export .progress-bar-wrap {
-    margin-bottom: 16px;
-  }
-
-  body.pdf-export .grid {
-    grid-template-columns: 1.35fr 1fr 1fr 1fr 0.9fr;
-    gap: 12px;
-  }
-
-  body.pdf-export .card {
-    break-inside: avoid;
-  }
-
-  body.pdf-export .card-header {
-    padding: 8px 10px;
-    font-size: 0.88rem;
-  }
-
-  body.pdf-export .card-body {
-    padding: 4px 0;
-  }
-
-  body.pdf-export .check-row {
-    min-height: 30px;
-    padding: 4px 10px;
-    gap: 7px;
-  }
-
-  body.pdf-export .check-row .row-label {
-    font-size: 0.74rem;
-  }
-
-  body.pdf-export .chk {
-    width: 17px;
-    height: 17px;
-    min-width: 17px;
-  }
-
-  body.pdf-export .row-input {
-    font-size: 0.72rem;
-    width: 70px;
-  }
-
-  body.pdf-export .dual-inputs {
-    gap: 3px;
-  }
-
-  body.pdf-export .dual-inputs .row-input {
-    width: 45px !important;
-  }
-
-  body.pdf-export .dual-label {
-    font-size: 0.62rem;
-  }
-
-  body.pdf-export .notes-section {
-    margin-top: 14px;
-  }
-
-  body.pdf-export .notes-section textarea {
-    min-height: 60px;
-  }
-
-  /* PRINT OVERRIDES */
-  @media print {
-    body {
-      background: #fff;
-      color: #000;
-      padding: 12px;
-    }
-
-    .topbar {
-      border-bottom-color: #222;
-    }
-
-    .title-block h1 {
-      color: #000;
-    }
-
-    .btn-save,
-    .level-selector {
-      display: none !important;
-    }
-
-    .card {
-      border-top-color: #222;
-      background: #fff;
-      border-color: #ccc;
-    }
-
-    .card-header {
-      background: #f0f0f0;
-      color: #000;
-    }
-
-    .check-row:hover {
-      background: transparent;
-    }
-
-    .progress-bar-wrap {
-      display: none;
-    }
-
-    .chk:checked {
-      background: #333;
-      border-color: #333;
-    }
-
-    .chk:checked::after {
-      color: #fff;
-    }
-
-    .meta-field input,
-    .row-input,
-    .notes-section textarea {
-      background: transparent;
-      border-color: #aaa;
-      color: #000;
-    }
-
-    .row-label,
-    .meta-field label,
-    .dual-label {
-      color: #333;
-    }
-
-    .card-header .icon {
-      display: none;
-    }
   }
 </style>
 </head>
 
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
   <div class="title-block">
     <h1>Bike Service Checklist</h1>
@@ -546,67 +321,56 @@ html = r'''<!DOCTYPE html>
   <button class="btn-save" onclick="savePDF()">⬇ Save as PDF</button>
 </div>
 
-<!-- ONLY THIS AREA IS CAPTURED IN THE PDF -->
-<div id="pdfContent">
-
-  <!-- META FIELDS -->
-  <div class="meta-grid" id="meta">
-    <div class="meta-field">
-      <label>Client Name</label>
-      <input type="text" id="clientName" placeholder="Enter client name" />
-    </div>
-
-    <div class="meta-field">
-      <label>Bike Model</label>
-      <input type="text" id="bikeModel" placeholder="e.g. Trek Domane SL6" />
-    </div>
-
-    <div class="meta-field">
-      <label>Service By</label>
-      <input type="text" id="serviceBy" placeholder="Technician name" />
-    </div>
-
-    <div class="meta-field">
-      <label>Inspection Date</label>
-      <input type="date" id="inspDate" />
-    </div>
+<div class="meta-grid">
+  <div class="meta-field">
+    <label>Client Name</label>
+    <input type="text" id="clientName" placeholder="Enter client name" />
   </div>
 
-  <!-- LEVEL SELECTOR -->
-  <div class="level-selector">
-    <span class="level-label">Service Level:</span>
-    <button class="level-btn" onclick="setLevel(1,this)">Level 1 — Service</button>
-    <button class="level-btn" onclick="setLevel(2,this)">Level 2 — Service</button>
-    <button class="level-btn active" onclick="setLevel(3,this)">Level 3 — Bike Assembly</button>
+  <div class="meta-field">
+    <label>Bike Model</label>
+    <input type="text" id="bikeModel" placeholder="e.g. Trek Domane SL6" />
   </div>
 
-  <!-- PROGRESS -->
-  <div class="progress-bar-wrap">
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div class="progress-text" id="progressText">0 / 0</div>
+  <div class="meta-field">
+    <label>Service By</label>
+    <input type="text" id="serviceBy" placeholder="Technician name" />
   </div>
 
-  <!-- CHECKLIST GRID -->
-  <div class="grid" id="checklistGrid"></div>
-
-  <!-- NOTES -->
-  <div class="notes-section">
-    <label>Additional Notes / Observations</label>
-    <textarea id="notes" placeholder="Enter any additional notes, observations, or follow-up actions here..."></textarea>
+  <div class="meta-field">
+    <label>Inspection Date</label>
+    <input type="date" id="inspDate" />
   </div>
+</div>
 
+<div class="level-selector">
+  <span class="level-label">Service Level:</span>
+  <button class="level-btn" data-level="Level 1 — Service" onclick="setLevel(this)">Level 1 — Service</button>
+  <button class="level-btn" data-level="Level 2 — Service" onclick="setLevel(this)">Level 2 — Service</button>
+  <button class="level-btn active" data-level="Level 3 — Bike Assembly" onclick="setLevel(this)">Level 3 — Bike Assembly</button>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-text" id="progressText">0 / 0</div>
+</div>
+
+<div class="grid" id="checklistGrid"></div>
+
+<div class="notes-section">
+  <label>Additional Notes / Observations</label>
+  <textarea id="notes" placeholder="Enter any additional notes, observations, or follow-up actions here..."></textarea>
 </div>
 
 <script>
 const sections = [
   {
-    title: "Torqued Specification (Bolts)",
-    icon: "🔩",
+    title: "Torque Specifications",
     items: [
       { label: "Shifters", type: "check" },
-      { label: "Handle / Stem Bolts", type: "check" },
+      { label: "Handlebar / Stem Bolts", type: "check" },
       { label: "Stem Steerer", type: "check" },
       { label: "Top Cap", type: "check" },
       { label: "Saddle", type: "check" },
@@ -626,12 +390,11 @@ const sections = [
       { label: "Bottle Cage", type: "check" },
       { label: "Crank Arm Bolt", type: "check" },
       { label: "Chain Ring Bolts", type: "check" },
-      { label: "Sram Preload Bolt", type: "check" }
+      { label: "SRAM Preload Bolt", type: "check" }
     ]
   },
   {
     title: "Drive Train",
-    icon: "⚙️",
     items: [
       { label: "Limit Screws — Front", type: "check" },
       { label: "Limit Screws — Rear", type: "check" },
@@ -645,36 +408,33 @@ const sections = [
   },
   {
     title: "Brakes",
-    icon: "🛑",
     items: [
       { label: "No Brake Rub", type: "check" },
-      { label: "No Brakes Squeal", type: "check" },
-      { label: "Rim Brakes Pads Toe-in", type: "check" },
+      { label: "No Brake Squeal", type: "check" },
+      { label: "Rim Brake Pads Toe-in", type: "check" },
       { label: "Brake Pad Thickness — Front", type: "input", placeholder: "mm" },
       { label: "Brake Pad Thickness — Rear", type: "input", placeholder: "mm" },
-      { label: "Rotor Disc Thickness — Front", type: "input", placeholder: "mm" },
-      { label: "Rotor Disc Thickness — Rear", type: "input", placeholder: "mm" }
+      { label: "Rotor Thickness — Front", type: "input", placeholder: "mm" },
+      { label: "Rotor Thickness — Rear", type: "input", placeholder: "mm" }
     ]
   },
   {
     title: "Wheels",
-    icon: "🚲",
     items: [
       { label: "No Lateral Play", type: "check" },
-      { label: "Tyres Pressure (PSI)", type: "dual", labels: ["Front", "Rear"] },
-      { label: "Tyres Beads Seated", type: "check" },
+      { label: "Tyre Pressure", type: "dual", labels: ["Front", "Rear"] },
+      { label: "Tyre Beads Seated", type: "check" },
       { label: "Valves Tightened", type: "check" },
-      { label: "Lateral True Within 1-2mm", type: "check" },
-      { label: "Tyres Direction", type: "check" }
+      { label: "Lateral True Within 1–2 mm", type: "check" },
+      { label: "Tyre Direction", type: "check" }
     ]
   },
   {
     title: "Others",
-    icon: "🔧",
     items: [
       { label: "Headset Play", type: "check" },
       { label: "Cables Crimped", type: "check" },
-      { label: "Handle Bar Alignment", type: "check" },
+      { label: "Handlebar Alignment", type: "check" },
       { label: "Saddle Alignment", type: "check" }
     ]
   }
@@ -683,216 +443,410 @@ const sections = [
 let uid = 0;
 
 function render() {
-  const grid = document.getElementById('checklistGrid');
-  grid.innerHTML = '';
+  const grid = document.getElementById("checklistGrid");
+  grid.innerHTML = "";
   uid = 0;
 
-  sections.forEach(section => {
-    const card = document.createElement('div');
-    card.className = 'card';
+  sections.forEach((section, sectionIndex) => {
+    const card = document.createElement("div");
+    card.className = "card";
 
     card.innerHTML = `
-      <div class="card-header">
-        <span class="icon">${section.icon}</span>
-        ${section.title}
-      </div>
+      <div class="card-header">${section.title}</div>
       <div class="card-body"></div>
     `;
 
-    grid.appendChild(card);
+    const body = card.querySelector(".card-body");
 
-    const body = card.querySelector('.card-body');
-
-    section.items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'check-row';
+    section.items.forEach((item, itemIndex) => {
       uid++;
+      const row = document.createElement("div");
+      row.className = "check-row";
+      row.dataset.section = sectionIndex;
+      row.dataset.item = itemIndex;
 
-      if (item.type === 'check') {
+      if (item.type === "check") {
         row.innerHTML = `
-          <input
-            class="chk tracker"
-            type="checkbox"
-            id="chk_${uid}"
-            onchange="updateProgress()"
-          />
-          <label class="row-label" for="chk_${uid}">
-            ${item.label}
-          </label>
+          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
+          <label class="row-label" for="chk_${uid}">${item.label}</label>
         `;
       }
 
-      if (item.type === 'input') {
+      if (item.type === "input") {
         row.innerHTML = `
-          <input
-            class="chk tracker"
-            type="checkbox"
-            id="chk_${uid}"
-            onchange="updateProgress()"
-          />
-          <label class="row-label" for="chk_${uid}">
-            ${item.label}
-          </label>
-          <input
-            class="row-input"
-            type="text"
-            placeholder="${item.placeholder || ''}"
-          />
+          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
+          <label class="row-label" for="chk_${uid}">${item.label}</label>
+          <input class="row-input" type="text" placeholder="${item.placeholder || ""}" />
         `;
       }
 
-      if (item.type === 'dual') {
-        const labels = item.labels || ['L', 'R'];
-
+      if (item.type === "dual") {
+        const labels = item.labels || ["L", "R"];
         row.innerHTML = `
-          <input
-            class="chk tracker"
-            type="checkbox"
-            id="chk_${uid}"
-            onchange="updateProgress()"
-          />
-          <label class="row-label" for="chk_${uid}">
-            ${item.label}
-          </label>
-
+          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
+          <label class="row-label" for="chk_${uid}">${item.label}</label>
           <div class="dual-inputs">
             <span class="dual-label">${labels[0]}</span>
-            <input
-              class="row-input"
-              type="text"
-              placeholder="PSI"
-              style="width:60px"
-            />
-
+            <input class="row-input" type="text" placeholder="PSI" style="width:60px" />
             <span class="dual-label">${labels[1]}</span>
-            <input
-              class="row-input"
-              type="text"
-              placeholder="PSI"
-              style="width:60px"
-            />
+            <input class="row-input" type="text" placeholder="PSI" style="width:60px" />
           </div>
         `;
       }
 
       body.appendChild(row);
     });
+
+    grid.appendChild(card);
   });
 
-  document.getElementById('inspDate').valueAsDate = new Date();
+  document.getElementById("inspDate").valueAsDate = new Date();
   updateProgress();
 }
 
-function updateProgress() {
-  const all = document.querySelectorAll('.tracker');
-  const checked = document.querySelectorAll('.tracker:checked');
-
-  const percentage = all.length
-    ? Math.round((checked.length / all.length) * 100)
-    : 0;
-
-  document.getElementById('progressFill').style.width = percentage + '%';
-  document.getElementById('progressText').textContent =
-    `${checked.length} / ${all.length}`;
+function setLevel(button) {
+  document.querySelectorAll(".level-btn").forEach(btn => btn.classList.remove("active"));
+  button.classList.add("active");
 }
 
-function setLevel(level, button) {
-  document
-    .querySelectorAll('.level-btn')
-    .forEach(item => item.classList.remove('active'));
+function updateProgress() {
+  const all = document.querySelectorAll(".tracker");
+  const checked = document.querySelectorAll(".tracker:checked");
+  const percentage = all.length ? Math.round((checked.length / all.length) * 100) : 0;
 
-  button.classList.add('active');
+  document.getElementById("progressFill").style.width = percentage + "%";
+  document.getElementById("progressText").textContent = `${checked.length} / ${all.length}`;
+}
+
+function getChecklistData() {
+  return sections.map((section, sectionIndex) => {
+    const rows = document.querySelectorAll(`.check-row[data-section="${sectionIndex}"]`);
+
+    const items = Array.from(rows).map((row, itemIndex) => {
+      const checkbox = row.querySelector(".tracker");
+      const inputs = Array.from(row.querySelectorAll(".row-input")).map(input => input.value.trim());
+
+      return {
+        ...section.items[itemIndex],
+        checked: checkbox.checked,
+        values: inputs
+      };
+    });
+
+    return {
+      title: section.title,
+      items
+    };
+  });
+}
+
+function drawCheckbox(pdf, x, y, size, checked) {
+  pdf.setDrawColor(65, 65, 65);
+  pdf.setLineWidth(0.25);
+  pdf.rect(x, y, size, size);
+
+  if (checked) {
+    pdf.setFillColor(232, 255, 71);
+    pdf.rect(x, y, size, size, "F");
+
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
+    pdf.text("X", x + size / 2, y + size - 0.7, { align: "center" });
+  }
+}
+
+function fitText(pdf, text, maxWidth, fontSize, minSize = 4.5) {
+  let size = fontSize;
+  pdf.setFontSize(size);
+
+  while (pdf.getTextWidth(text) > maxWidth && size > minSize) {
+    size -= 0.25;
+    pdf.setFontSize(size);
+  }
+
+  return size;
+}
+
+function drawMetaField(pdf, label, value, x, y, width) {
+  pdf.setTextColor(110, 110, 110);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(5.5);
+  pdf.text(label.toUpperCase(), x, y);
+
+  pdf.setDrawColor(220, 220, 220);
+  pdf.setLineWidth(0.25);
+  pdf.line(x, y + 6.5, x + width, y + 6.5);
+
+  pdf.setTextColor(25, 25, 25);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.text(value || "—", x, y + 5);
+}
+
+function drawSectionCard(pdf, section, x, y, width, maxHeight) {
+  const headerHeight = 8;
+  const itemCount = section.items.length;
+  const availableRowsHeight = maxHeight - headerHeight;
+  const rowHeight = Math.min(7.2, availableRowsHeight / itemCount);
+  const cardHeight = headerHeight + rowHeight * itemCount;
+
+  pdf.setDrawColor(55, 55, 55);
+  pdf.setLineWidth(0.25);
+  pdf.rect(x, y, width, cardHeight);
+
+  pdf.setFillColor(35, 35, 35);
+  pdf.rect(x, y, width, headerHeight, "F");
+
+  pdf.setFillColor(232, 255, 71);
+  pdf.rect(x, y, width, 1.1, "F");
+
+  pdf.setTextColor(232, 255, 71);
+  pdf.setFont("helvetica", "bold");
+  fitText(pdf, section.title.toUpperCase(), width - 4, 7, 5.5);
+  pdf.text(section.title.toUpperCase(), x + 2, y + 5.5);
+
+  section.items.forEach((item, index) => {
+    const rowY = y + headerHeight + index * rowHeight;
+
+    if (index % 2 === 1) {
+      pdf.setFillColor(248, 248, 248);
+      pdf.rect(x, rowY, width, rowHeight, "F");
+    }
+
+    pdf.setDrawColor(225, 225, 225);
+    pdf.line(x, rowY + rowHeight, x + width, rowY + rowHeight);
+
+    const boxSize = Math.min(3.4, rowHeight - 2);
+    drawCheckbox(pdf, x + 1.7, rowY + (rowHeight - boxSize) / 2, boxSize, item.checked);
+
+    let rightReserve = 2;
+
+    if (item.type === "input") {
+      rightReserve = 15;
+    }
+
+    if (item.type === "dual") {
+      rightReserve = 26;
+    }
+
+    const textX = x + 6.5;
+    const maxTextWidth = width - 6.5 - rightReserve;
+
+    pdf.setTextColor(30, 30, 30);
+    pdf.setFont("helvetica", "normal");
+    fitText(pdf, item.label, maxTextWidth, 5.8, 4.2);
+    pdf.text(item.label, textX, rowY + rowHeight / 2 + 1.5);
+
+    if (item.type === "input") {
+      const value = item.values[0] || "";
+      const valueX = x + width - 13;
+
+      pdf.setDrawColor(150, 150, 150);
+      pdf.line(valueX, rowY + rowHeight - 1.5, x + width - 1.5, rowY + rowHeight - 1.5);
+
+      if (value) {
+        pdf.setTextColor(20, 20, 20);
+        pdf.setFontSize(5.5);
+        pdf.text(value, x + width - 2, rowY + rowHeight / 2 + 1.5, { align: "right" });
+      }
+    }
+
+    if (item.type === "dual") {
+      const front = item.values[0] || "";
+      const rear = item.values[1] || "";
+      const startX = x + width - 25;
+
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(4.5);
+      pdf.text("F", startX, rowY + rowHeight / 2 + 1.4);
+
+      pdf.setDrawColor(150, 150, 150);
+      pdf.line(startX + 2.5, rowY + rowHeight - 1.5, startX + 9.5, rowY + rowHeight - 1.5);
+
+      if (front) {
+        pdf.setTextColor(20, 20, 20);
+        pdf.setFontSize(5);
+        pdf.text(front, startX + 9, rowY + rowHeight / 2 + 1.4, { align: "right" });
+      }
+
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(4.5);
+      pdf.text("R", startX + 12, rowY + rowHeight / 2 + 1.4);
+
+      pdf.setDrawColor(150, 150, 150);
+      pdf.line(startX + 14.5, rowY + rowHeight - 1.5, startX + 22, rowY + rowHeight - 1.5);
+
+      if (rear) {
+        pdf.setTextColor(20, 20, 20);
+        pdf.setFontSize(5);
+        pdf.text(rear, startX + 21.5, rowY + rowHeight / 2 + 1.4, { align: "right" });
+      }
+    }
+  });
+
+  return cardHeight;
 }
 
 async function savePDF() {
-  const button = document.querySelector('.btn-save');
-  const pdfContent = document.getElementById('pdfContent');
-
-  button.textContent = '⏳ Generating…';
+  const button = document.querySelector(".btn-save");
   button.disabled = true;
-
-  document.body.classList.add('pdf-export');
+  button.textContent = "⏳ Generating…";
 
   try {
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
-
-    await new Promise(resolve => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(resolve);
-      });
-    });
-
-    const canvas = await html2canvas(pdfContent, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: '#0f0f0f',
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: pdfContent.scrollWidth,
-      windowHeight: pdfContent.scrollHeight
-    });
-
     const { jsPDF } = window.jspdf;
 
     const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4',
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
       compress: true
     });
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const margin = 5;
-    const usableWidth = pageWidth - margin * 2;
-    const usableHeight = pageHeight - margin * 2;
+    const marginX = 7;
+    const top = 7;
 
-    const widthRatio = usableWidth / canvas.width;
-    const heightRatio = usableHeight / canvas.height;
-    const scaleRatio = Math.min(widthRatio, heightRatio);
+    // White background
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-    const imageWidth = canvas.width * scaleRatio;
-    const imageHeight = canvas.height * scaleRatio;
+    // Main title
+    pdf.setTextColor(30, 30, 30);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("BIKE SERVICE CHECKLIST", marginX, top + 7);
 
-    const x = (pageWidth - imageWidth) / 2;
-    const y = (pageHeight - imageHeight) / 2;
-
-    const imageData = canvas.toDataURL('image/jpeg', 0.95);
-
-    pdf.addImage(
-      imageData,
-      'JPEG',
-      x,
-      y,
-      imageWidth,
-      imageHeight,
-      undefined,
-      'FAST'
+    // Subtitle
+    pdf.setTextColor(95, 95, 95);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.text(
+      "WORKSHOP INSPECTION & TORQUE SPECIFICATION RECORD",
+      marginX,
+      top + 12
     );
 
-    const clientName =
-      document.getElementById('clientName').value.trim() || 'checklist';
+    // Accent line
+    pdf.setFillColor(232, 255, 71);
+    pdf.rect(marginX, top + 15, pageWidth - marginX * 2, 1.2, "F");
 
-    const inspectionDate =
-      document.getElementById('inspDate').value || 'today';
+    // Metadata
+    const clientName = document.getElementById("clientName").value.trim();
+    const bikeModel = document.getElementById("bikeModel").value.trim();
+    const serviceBy = document.getElementById("serviceBy").value.trim();
+    const inspectionDate = document.getElementById("inspDate").value;
+    const selectedLevel =
+      document.querySelector(".level-btn.active")?.dataset.level || "—";
 
-    const safeClientName = clientName.replace(/[<>:"/\\|?*]/g, '_');
+    const metaY = top + 22;
+    const metaGap = 5;
+    const metaWidth = (pageWidth - marginX * 2 - metaGap * 3) / 4;
 
-    pdf.save(
-      `BikeChecklist_${safeClientName}_${inspectionDate}.pdf`
+    drawMetaField(pdf, "Client Name", clientName, marginX, metaY, metaWidth);
+    drawMetaField(pdf, "Bike Model", bikeModel, marginX + (metaWidth + metaGap), metaY, metaWidth);
+    drawMetaField(pdf, "Service By", serviceBy, marginX + (metaWidth + metaGap) * 2, metaY, metaWidth);
+    drawMetaField(pdf, "Inspection Date", inspectionDate, marginX + (metaWidth + metaGap) * 3, metaY, metaWidth);
+
+    // Service level
+    const levelY = metaY + 13;
+    pdf.setTextColor(95, 95, 95);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(5.5);
+    pdf.text("SERVICE LEVEL", marginX, levelY);
+
+    pdf.setFillColor(232, 255, 71);
+    pdf.roundedRect(marginX + 24, levelY - 4.2, 48, 6, 1, 1, "F");
+
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont("helvetica", "bold");
+    fitText(pdf, selectedLevel.toUpperCase(), 44, 6, 5);
+    pdf.text(selectedLevel.toUpperCase(), marginX + 48, levelY, { align: "center" });
+
+    // Progress
+    const all = document.querySelectorAll(".tracker").length;
+    const checked = document.querySelectorAll(".tracker:checked").length;
+
+    pdf.setTextColor(95, 95, 95);
+    pdf.setFontSize(5.5);
+    pdf.text("PROGRESS", pageWidth - marginX - 33, levelY);
+
+    pdf.setTextColor(30, 30, 30);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(6.5);
+    pdf.text(`${checked} / ${all}`, pageWidth - marginX, levelY, { align: "right" });
+
+    const checklistData = getChecklistData();
+
+    const gridY = levelY + 5;
+    const notesHeight = 24;
+    const footerHeight = 7;
+    const gridMaxHeight = pageHeight - gridY - notesHeight - footerHeight - 4;
+
+    const gap = 2.5;
+    const availableWidth = pageWidth - marginX * 2 - gap * 4;
+
+    const ratios = [1.35, 1, 1, 1, 0.9];
+    const ratioTotal = ratios.reduce((sum, value) => sum + value, 0);
+    const widths = ratios.map(ratio => availableWidth * ratio / ratioTotal);
+
+    let x = marginX;
+
+    checklistData.forEach((section, index) => {
+      drawSectionCard(pdf, section, x, gridY, widths[index], gridMaxHeight);
+      x += widths[index] + gap;
+    });
+
+    // Notes section
+    const notesY = pageHeight - notesHeight - footerHeight;
+    const notes = document.getElementById("notes").value.trim();
+
+    pdf.setTextColor(90, 90, 90);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(5.5);
+    pdf.text("ADDITIONAL NOTES / OBSERVATIONS", marginX, notesY);
+
+    pdf.setDrawColor(90, 90, 90);
+    pdf.setLineWidth(0.3);
+    pdf.rect(marginX, notesY + 2, pageWidth - marginX * 2, notesHeight - 4);
+
+    if (notes) {
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(6);
+      const noteLines = pdf.splitTextToSize(notes, pageWidth - marginX * 2 - 4);
+      pdf.text(noteLines.slice(0, 5), marginX + 2, notesY + 6);
+    }
+
+    // Footer
+    pdf.setTextColor(130, 130, 130);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(5);
+    pdf.text(
+      "Generated from Bike Service Checklist",
+      marginX,
+      pageHeight - 2.5
     );
+
+    pdf.text(
+      "Technician Signature: ______________________________",
+      pageWidth - marginX,
+      pageHeight - 2.5,
+      { align: "right" }
+    );
+
+    const safeClient = (clientName || "checklist").replace(/[<>:"/\\|?*]/g, "_");
+    const safeDate = inspectionDate || "today";
+
+    pdf.save(`BikeChecklist_${safeClient}_${safeDate}.pdf`);
   } catch (error) {
     console.error(error);
-    alert('PDF generation failed: ' + error.message);
+    alert("PDF generation failed: " + error.message);
   } finally {
-    document.body.classList.remove('pdf-export');
-    button.textContent = '⬇ Save as PDF';
     button.disabled = false;
+    button.textContent = "⬇ Save as PDF";
   }
 }
 
@@ -903,7 +857,7 @@ render();
 </html>
 '''
 
-path = "/mnt/data/bike-service-checklist-fixed.html"
+path = "/mnt/data/bike-service-checklist-native-pdf.html"
 with open(path, "w", encoding="utf-8") as f:
     f.write(html)
 
