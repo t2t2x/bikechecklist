@@ -579,3 +579,48 @@ render();
 </script>
 </body>
 </html>
+
+#pdfContent {
+  width: 100%;
+}
+
+body.pdf-export {
+  padding: 0;
+}
+
+body.pdf-export #pdfContent {
+  width: 1400px;
+  padding: 24px;
+  background: var(--bg);
+}
+
+body.pdf-export .grid {
+  grid-template-columns: 1.35fr 1fr 1fr 1fr 0.9fr;
+  gap: 12px;
+}
+
+body.pdf-export .meta-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+body.pdf-export .card {
+  break-inside: avoid;
+}
+
+body.pdf-export .check-row {
+  min-height: 32px;
+  padding: 4px 10px;
+}
+
+body.pdf-export .check-row .row-label {
+  font-size: 0.76rem;
+}
+
+body.pdf-export .card-header {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+body.pdf-export .notes-section textarea {
+  min-height: 70px;
+}
