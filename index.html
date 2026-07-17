@@ -320,6 +320,27 @@
     color: var(--muted);
   }
 
+  .dual-check-inputs {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .dual-check-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .dual-check-text {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    user-select: none;
+  }
+
   .notes-section {
     margin-top: 20px;
   }
@@ -416,16 +437,16 @@ const sections = [
       { label: "Saddle", type: "check" },
       { label: "Seat Post", type: "check" },
       { label: "Brake Caliper", type: "check" },
-      { label: "Rim Brake Pads", type: "check" },
-      { label: "Brake Pinch Bolts", type: "check" },
+      { label: "Rim Brake Pads", type: "check_na" },
+      { label: "Brake Pinch Bolts", type: "check_na" },
       { label: "Pedals", type: "check" },
-      { label: "Thru Axles", type: "check" },
+      { label: "Thru Axles", type: "check_na" },
       { label: "Cassette", type: "check" },
-      { label: "Rotors", type: "check" },
-      { label: "Front Derailleur Mount", type: "check" },
-      { label: "FD Cable Pinch Bolt", type: "check" },
+      { label: "Rotors", type: "check_na" },
+      { label: "Front Derailleur Mount", type: "check_na" },
+      { label: "FD Cable Pinch Bolt", type: "check_na" },
       { label: "Rear Derailleur Mount", type: "check" },
-      { label: "RD Cable Pinch Bolt", type: "check" },
+      { label: "RD Cable Pinch Bolt", type: "check_na" },
       { label: "RD Pulley Wheels", type: "check" },
       { label: "Bottle Cage", type: "check" },
       { label: "Crank Arm Bolt", type: "check" },
@@ -436,8 +457,8 @@ const sections = [
   {
     title: "Drive Train",
     items: [
-      { label: "Limit Screws — Front", type: "check" },
-      { label: "Limit Screws — Rear", type: "check" },
+      { label: "Limit Screws — Front", type: "dual_check", labels: ["L", "H"] },
+      { label: "Limit Screws — Rear", type: "dual_check", labels: ["L", "H"] },
       { label: "Indexing — Front", type: "check" },
       { label: "Indexing — Rear", type: "check" },
       { label: "Chain Wear", type: "check" },
@@ -449,8 +470,8 @@ const sections = [
   {
     title: "Brakes",
     items: [
-      { label: "No Brake Rub", type: "check" },
-      { label: "No Brake Squeal", type: "check" },
+      { label: "Brake Rub", type: "check" },
+      { label: "Brake Squeal", type: "check" },
       { label: "Rim Brake Pads Toe-in", type: "check" },
       { label: "Brake Pad Thickness — Front", type: "input", placeholder: "mm" },
       { label: "Brake Pad Thickness — Rear", type: "input", placeholder: "mm" },
@@ -461,7 +482,7 @@ const sections = [
   {
     title: "Wheels",
     items: [
-      { label: "No Lateral Play", type: "check" },
+      { label: "Lateral Play", type: "check" },
       { label: "Tyre Pressure", type: "dual", labels: ["Front", "Rear"] },
       { label: "Tyre Beads Seated", type: "check" },
       { label: "Valves Tightened", type: "check" },
@@ -545,6 +566,23 @@ function render() {
         `;
       }
 
+      if (item.type === "dual_check") {
+        const labels = item.labels || ["L", "H"];
+        row.innerHTML = `
+          <label class="row-label">${item.label}</label>
+          <div class="dual-check-inputs">
+            <label class="dual-check-item" for="chk_${uid}_a">
+              <input class="chk tracker" type="checkbox" id="chk_${uid}_a" onchange="updateProgress()" />
+              <span class="dual-check-text">${labels[0]}</span>
+            </label>
+            <label class="dual-check-item" for="chk_${uid}_b">
+              <input class="chk tracker" type="checkbox" id="chk_${uid}_b" onchange="updateProgress()" />
+              <span class="dual-check-text">${labels[1]}</span>
+            </label>
+          </div>
+        `;
+      }
+
       body.appendChild(row);
     });
 
@@ -591,13 +629,22 @@ function getChecklistData() {
     const rows = document.querySelectorAll(`.check-row[data-section="${sectionIndex}"]`);
 
     const items = Array.from(rows).map((row, itemIndex) => {
-      const checkbox = row.querySelector(".tracker");
+      const itemDef = section.items[itemIndex];
+      const trackers = Array.from(row.querySelectorAll(".tracker"));
       const naCheckbox = row.querySelector(".na-chk");
       const inputs = Array.from(row.querySelectorAll(".row-input")).map(input => input.value.trim());
 
+      if (itemDef.type === "dual_check") {
+        return {
+          ...itemDef,
+          checks: trackers.map(chk => chk.checked),
+          values: inputs
+        };
+      }
+
       return {
-        ...section.items[itemIndex],
-        checked: checkbox.checked,
+        ...itemDef,
+        checked: trackers[0] ? trackers[0].checked : false,
         na: naCheckbox ? naCheckbox.checked : false,
         values: inputs
       };
@@ -702,8 +749,11 @@ function drawSectionCard(pdf, section, x, y, width, maxHeight) {
     const boxSize = Math.min(3.4, rowHeight - 2);
     const boxY = rowY + (rowHeight - boxSize) / 2;
     const isNA = item.type === "check_na" && item.na;
+    const isDualCheck = item.type === "dual_check";
 
-    if (isNA) {
+    if (isDualCheck) {
+      // No single left checkbox for this row type — L/H checkboxes are drawn on the right instead.
+    } else if (isNA) {
       drawNABadge(pdf, x + 1.7, boxY, boxSize);
     } else {
       drawCheckbox(pdf, x + 1.7, boxY, boxSize, item.checked);
@@ -715,7 +765,7 @@ function drawSectionCard(pdf, section, x, y, width, maxHeight) {
       rightReserve = 15;
     }
 
-    if (item.type === "dual") {
+    if (item.type === "dual" || isDualCheck) {
       rightReserve = 26;
     }
 
@@ -776,6 +826,25 @@ function drawSectionCard(pdf, section, x, y, width, maxHeight) {
         pdf.setFontSize(5);
         pdf.text(rear, startX + 21.5, rowY + rowHeight / 2 + 1.4, { align: "right" });
       }
+    }
+
+    if (isDualCheck) {
+      const labels = item.labels || ["L", "H"];
+      const checksArr = item.checks || [false, false];
+      const miniBox = Math.min(3, rowHeight - 2.5);
+      const miniY = rowY + (rowHeight - miniBox) / 2;
+      const startX = x + width - 25;
+
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(4.5);
+      pdf.text(labels[0], startX, rowY + rowHeight / 2 + 1.2);
+      drawCheckbox(pdf, startX + 3, miniY, miniBox, checksArr[0]);
+
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(4.5);
+      pdf.text(labels[1], startX + 13, rowY + rowHeight / 2 + 1.2);
+      drawCheckbox(pdf, startX + 16, miniY, miniBox, checksArr[1]);
     }
   });
 
