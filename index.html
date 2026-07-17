@@ -1,32 +1,14 @@
 from pathlib import Path
 
-source = Path("/mnt/data/bike-service-checklist-native-pdf.html")
-target = Path("/mnt/data/bike-service-checklist-pass-na.html")
+source = Path("/mnt/data/bike-service-checklist-pass-na.html")
+target = Path("/mnt/data/bike-service-checklist-pass-na-fixed.html")
 
 html = source.read_text(encoding="utf-8")
 
+# Replace optional chaining and make the status row use a hidden tracker so all
+# progress/PDF logic stays consistent across browsers.
 html = html.replace(
-    '{ label: "SRAM Preload Bolt", type: "check" }',
-    '{ label: "SRAM Preload Bolt", type: "passna" }'
-)
-
-render_anchor = '''      if (item.type === "dual") {
-        const labels = item.labels || ["L", "R"];
-        row.innerHTML = `
-          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
-          <label class="row-label" for="chk_${uid}">${item.label}</label>
-          <div class="dual-inputs">
-            <span class="dual-label">${labels[0]}</span>
-            <input class="row-input" type="text" placeholder="PSI" style="width:60px" />
-            <span class="dual-label">${labels[1]}</span>
-            <input class="row-input" type="text" placeholder="PSI" style="width:60px" />
-          </div>
-        `;
-      }
-'''
-
-render_replacement = render_anchor + '''
-      if (item.type === "passna") {
+'''      if (item.type === "passna") {
         row.innerHTML = `
           <label class="row-label">${item.label}</label>
           <div class="passna-control" role="group" aria-label="${item.label} status">
@@ -35,63 +17,22 @@ render_replacement = render_anchor + '''
           </div>
         `;
       }
+''',
+'''      if (item.type === "passna") {
+        row.innerHTML = `
+          <input class="status-tracker" type="hidden" value="" />
+          <label class="row-label">${item.label}</label>
+          <div class="passna-control" role="group" aria-label="${item.label} status">
+            <button type="button" class="status-btn pass-btn" data-status="PASS" onclick="setPassNaStatus(this)">PASS</button>
+            <button type="button" class="status-btn na-btn" data-status="N/A" onclick="setPassNaStatus(this)">N/A</button>
+          </div>
+        `;
+      }
 '''
+)
 
-html = html.replace(render_anchor, render_replacement)
-
-css_anchor = '''  .dual-label {
-    font-size: 0.7rem;
-    color: var(--muted);
-  }
-'''
-
-css_replacement = css_anchor + '''
-  .passna-control {
-    display: flex;
-    gap: 6px;
-  }
-
-  .status-btn {
-    min-width: 54px;
-    padding: 5px 8px;
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--muted);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-  }
-
-  .status-btn:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
-
-  .status-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #000;
-  }
-
-  .status-btn.na-btn.active {
-    background: var(--accent2);
-    border-color: var(--accent2);
-    color: #fff;
-  }
-'''
-
-html = html.replace(css_anchor, css_replacement)
-
-setlevel_anchor = '''function setLevel(button) {
-  document.querySelectorAll(".level-btn").forEach(btn => btn.classList.remove("active"));
-  button.classList.add("active");
-}
-'''
-
-setlevel_replacement = setlevel_anchor + '''
-function setPassNaStatus(button) {
+html = html.replace(
+'''function setPassNaStatus(button) {
   const control = button.closest(".passna-control");
   const wasActive = button.classList.contains("active");
 
@@ -103,49 +44,31 @@ function setPassNaStatus(button) {
 
   updateProgress();
 }
-'''
+''',
+'''function setPassNaStatus(button) {
+  const control = button.closest(".passna-control");
+  const row = button.closest(".check-row");
+  const tracker = row.querySelector(".status-tracker");
+  const wasActive = button.classList.contains("active");
 
-html = html.replace(setlevel_anchor, setlevel_replacement)
+  control.querySelectorAll(".status-btn").forEach(function (btn) {
+    btn.classList.remove("active");
+  });
 
-get_data_old = '''    const items = Array.from(rows).map((row, itemIndex) => {
-      const checkbox = row.querySelector(".tracker");
-      const inputs = Array.from(row.querySelectorAll(".row-input")).map(input => input.value.trim());
+  if (wasActive) {
+    tracker.value = "";
+  } else {
+    button.classList.add("active");
+    tracker.value = button.dataset.status;
+  }
 
-      return {
-        ...section.items[itemIndex],
-        checked: checkbox.checked,
-        values: inputs
-      };
-    });
-'''
-
-get_data_new = '''    const items = Array.from(rows).map((row, itemIndex) => {
-      const checkbox = row.querySelector(".tracker");
-      const inputs = Array.from(row.querySelectorAll(".row-input")).map(input => input.value.trim());
-      const activeStatus = row.querySelector(".status-btn.active");
-
-      return {
-        ...section.items[itemIndex],
-        checked: checkbox ? checkbox.checked : activeStatus?.dataset.status === "PASS",
-        status: activeStatus?.dataset.status || "",
-        values: inputs
-      };
-    });
-'''
-
-html = html.replace(get_data_old, get_data_new)
-
-progress_old = '''function updateProgress() {
-  const all = document.querySelectorAll(".tracker");
-  const checked = document.querySelectorAll(".tracker:checked");
-  const percentage = all.length ? Math.round((checked.length / all.length) * 100) : 0;
-
-  document.getElementById("progressFill").style.width = percentage + "%";
-  document.getElementById("progressText").textContent = `${checked.length} / ${all.length}`;
+  updateProgress();
 }
 '''
+)
 
-progress_new = '''function updateProgress() {
+html = html.replace(
+'''function updateProgress() {
   const checkboxes = Array.from(document.querySelectorAll(".tracker"));
   const passNaRows = Array.from(document.querySelectorAll(".passna-control"));
 
@@ -159,108 +82,105 @@ progress_new = '''function updateProgress() {
   document.getElementById("progressFill").style.width = percentage + "%";
   document.getElementById("progressText").textContent = `${completed} / ${total}`;
 }
+''',
+'''function updateProgress() {
+  const checkboxes = Array.from(document.querySelectorAll(".tracker"));
+  const statusTrackers = Array.from(document.querySelectorAll(".status-tracker"));
+
+  const completedCheckboxes = checkboxes.filter(function (box) {
+    return box.checked;
+  }).length;
+
+  const completedStatuses = statusTrackers.filter(function (tracker) {
+    return tracker.value === "PASS" || tracker.value === "N/A";
+  }).length;
+
+  const total = checkboxes.length + statusTrackers.length;
+  const completed = completedCheckboxes + completedStatuses;
+  const percentage = total ? Math.round((completed / total) * 100) : 0;
+
+  document.getElementById("progressFill").style.width = percentage + "%";
+  document.getElementById("progressText").textContent = completed + " / " + total;
+}
 '''
+)
 
-html = html.replace(progress_old, progress_new)
+html = html.replace(
+'''      const activeStatus = row.querySelector(".status-btn.active");
 
-reserve_old = '''    if (item.type === "dual") {
-      rightReserve = 26;
-    }
-'''
+      return {
+        ...section.items[itemIndex],
+        checked: checkbox ? checkbox.checked : activeStatus?.dataset.status === "PASS",
+        status: activeStatus?.dataset.status || "",
+        values: inputs
+      };
+''',
+'''      const statusTracker = row.querySelector(".status-tracker");
+      const status = statusTracker ? statusTracker.value : "";
 
-reserve_new = '''    if (item.type === "dual") {
-      rightReserve = 26;
-    }
-
-    if (item.type === "passna") {
-      rightReserve = 18;
-    }
-'''
-
-html = html.replace(reserve_old, reserve_new)
-
-pdf_status_anchor = '''    if (item.type === "dual") {
-      const front = item.values[0] || "";
-      const rear = item.values[1] || "";
-      const startX = x + width - 25;
-
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFontSize(4.5);
-      pdf.text("F", startX, rowY + rowHeight / 2 + 1.4);
-
-      pdf.setDrawColor(150, 150, 150);
-      pdf.line(startX + 2.5, rowY + rowHeight - 1.5, startX + 9.5, rowY + rowHeight - 1.5);
-
-      if (front) {
-        pdf.setTextColor(20, 20, 20);
-        pdf.setFontSize(5);
-        pdf.text(front, startX + 9, rowY + rowHeight / 2 + 1.4, { align: "right" });
-      }
-
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFontSize(4.5);
-      pdf.text("R", startX + 12, rowY + rowHeight / 2 + 1.4);
-
-      pdf.setDrawColor(150, 150, 150);
-      pdf.line(startX + 14.5, rowY + rowHeight - 1.5, startX + 22, rowY + rowHeight - 1.5);
-
-      if (rear) {
-        pdf.setTextColor(20, 20, 20);
-        pdf.setFontSize(5);
-        pdf.text(rear, startX + 21.5, rowY + rowHeight / 2 + 1.4, { align: "right" });
-      }
-    }
-'''
-
-pdf_status_replacement = pdf_status_anchor + '''
-    if (item.type === "passna") {
-      const status = item.status || "";
-      const statusX = x + width - 16;
-      const statusY = rowY + 1.2;
-      const statusW = 14;
-      const statusH = rowHeight - 2.4;
-
-      if (status === "PASS") {
-        pdf.setFillColor(232, 255, 71);
-        pdf.setDrawColor(232, 255, 71);
-        pdf.roundedRect(statusX, statusY, statusW, statusH, 0.8, 0.8, "FD");
-        pdf.setTextColor(0, 0, 0);
-      } else if (status === "N/A") {
-        pdf.setFillColor(255, 107, 53);
-        pdf.setDrawColor(255, 107, 53);
-        pdf.roundedRect(statusX, statusY, statusW, statusH, 0.8, 0.8, "FD");
-        pdf.setTextColor(255, 255, 255);
-      } else {
-        pdf.setDrawColor(150, 150, 150);
-        pdf.roundedRect(statusX, statusY, statusW, statusH, 0.8, 0.8);
-        pdf.setTextColor(110, 110, 110);
-      }
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(5);
-      pdf.text(status || "—", statusX + statusW / 2, rowY + rowHeight / 2 + 1.4, {
-        align: "center"
+      return Object.assign({}, section.items[itemIndex], {
+        checked: checkbox ? checkbox.checked : status === "PASS",
+        status: status,
+        values: inputs
       });
-    }
 '''
+)
 
-html = html.replace(pdf_status_anchor, pdf_status_replacement)
-
-progress_pdf_old = '''    const all = document.querySelectorAll(".tracker").length;
-    const checked = document.querySelectorAll(".tracker:checked").length;
+html = html.replace(
+'''    const selectedLevel =
+      document.querySelector(".level-btn.active")?.dataset.level || "—";
+''',
+'''    const activeLevelButton = document.querySelector(".level-btn.active");
+    const selectedLevel = activeLevelButton
+      ? activeLevelButton.dataset.level
+      : "—";
 '''
+)
 
-progress_pdf_new = '''    const checkboxTotal = document.querySelectorAll(".tracker").length;
+html = html.replace(
+'''    const checkboxTotal = document.querySelectorAll(".tracker").length;
     const checkboxCompleted = document.querySelectorAll(".tracker:checked").length;
     const passNaControls = Array.from(document.querySelectorAll(".passna-control"));
     const passNaCompleted = passNaControls.filter(control => control.querySelector(".status-btn.active")).length;
 
     const all = checkboxTotal + passNaControls.length;
     const checked = checkboxCompleted + passNaCompleted;
-'''
+''',
+'''    const checkboxTotal = document.querySelectorAll(".tracker").length;
+    const checkboxCompleted = document.querySelectorAll(".tracker:checked").length;
+    const statusTrackers = Array.from(document.querySelectorAll(".status-tracker"));
+    const statusCompleted = statusTrackers.filter(function (tracker) {
+      return tracker.value === "PASS" || tracker.value === "N/A";
+    }).length;
 
-html = html.replace(progress_pdf_old, progress_pdf_new)
+    const all = checkboxTotal + statusTrackers.length;
+    const checked = checkboxCompleted + statusCompleted;
+'''
+)
+
+# Avoid drawing an extra checkbox on the PASS/N/A PDF row.
+html = html.replace(
+'''    const boxSize = Math.min(3.4, rowHeight - 2);
+    drawCheckbox(pdf, x + 1.7, rowY + (rowHeight - boxSize) / 2, boxSize, item.checked);
+
+    let rightReserve = 2;
+''',
+'''    const boxSize = Math.min(3.4, rowHeight - 2);
+
+    if (item.type !== "passna") {
+      drawCheckbox(pdf, x + 1.7, rowY + (rowHeight - boxSize) / 2, boxSize, item.checked);
+    }
+
+    let rightReserve = 2;
+'''
+)
+
+html = html.replace(
+'''    const textX = x + 6.5;
+''',
+'''    const textX = item.type === "passna" ? x + 2 : x + 6.5;
+'''
+)
 
 target.write_text(html, encoding="utf-8")
-
 print(target)
