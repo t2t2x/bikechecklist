@@ -1,486 +1,16 @@
-html = r'''<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bike Service Checklist</title>
+from pathlib import Path
 
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+source = Path("/mnt/data/bike-service-checklist-native-pdf.html")
+target = Path("/mnt/data/bike-service-checklist-pass-na.html")
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+html = source.read_text(encoding="utf-8")
 
-<style>
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #242424;
-    --border: #2e2e2e;
-    --accent: #e8ff47;
-    --accent2: #ff6b35;
-    --text: #f0f0f0;
-    --muted: #888;
-  }
+html = html.replace(
+    '{ label: "SRAM Preload Bolt", type: "check" }',
+    '{ label: "SRAM Preload Bolt", type: "passna" }'
+)
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Barlow', sans-serif;
-    min-height: 100vh;
-    padding: 24px;
-  }
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--accent);
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .title-block h1 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 2.6rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    line-height: 1;
-    color: var(--accent);
-  }
-
-  .title-block p {
-    font-size: 0.78rem;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-top: 4px;
-  }
-
-  .btn-save {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 12px 28px;
-    cursor: pointer;
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-  }
-
-  .btn-save:hover {
-    background: #fff;
-  }
-
-  .btn-save:disabled {
-    opacity: 0.6;
-    cursor: wait;
-  }
-
-  .meta-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-
-  .meta-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .meta-field label {
-    font-size: 0.68rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-  }
-
-  .meta-field input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-bottom: 2px solid var(--accent);
-    color: var(--text);
-    font-family: 'Barlow', sans-serif;
-    font-size: 0.92rem;
-    padding: 7px 10px;
-    outline: none;
-  }
-
-  .level-selector {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .level-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .level-btn {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.82rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 6px 18px;
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--muted);
-    cursor: pointer;
-  }
-
-  .level-btn.active {
-    background: var(--accent);
-    color: #000;
-    border-color: var(--accent);
-  }
-
-  .progress-bar-wrap {
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .progress-track {
-    flex: 1;
-    height: 6px;
-    background: var(--border);
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: var(--accent);
-    width: 0%;
-  }
-
-  .progress-text {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.88rem;
-    color: var(--accent);
-    min-width: 52px;
-    text-align: right;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 16px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--accent);
-    overflow: hidden;
-  }
-
-  .card-header {
-    background: var(--surface2);
-    padding: 10px 16px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .card-body {
-    padding: 8px 0;
-  }
-
-  .check-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 16px;
-    border-bottom: 1px solid var(--border);
-    min-height: 38px;
-  }
-
-  .check-row:last-child {
-    border-bottom: none;
-  }
-
-  .row-label {
-    flex: 1;
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-
-  .chk {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    appearance: none;
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    cursor: pointer;
-    position: relative;
-  }
-
-  .chk:checked {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .chk:checked::after {
-    content: "✓";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -52%);
-    font-size: 12px;
-    font-weight: 900;
-    color: #000;
-  }
-
-  .row-input {
-    background: transparent;
-    border: none;
-    border-bottom: 1px dashed var(--border);
-    color: var(--text);
-    font-family: 'Barlow', sans-serif;
-    font-size: 0.82rem;
-    padding: 2px 6px;
-    width: 90px;
-    outline: none;
-    text-align: center;
-  }
-
-  .dual-inputs {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-
-  .dual-label {
-    font-size: 0.7rem;
-    color: var(--muted);
-  }
-
-  .notes-section {
-    margin-top: 20px;
-  }
-
-  .notes-section label {
-    display: block;
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
-  .notes-section textarea {
-    width: 100%;
-    min-height: 90px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-bottom: 2px solid var(--accent2);
-    color: var(--text);
-    font-family: 'Barlow', sans-serif;
-    font-size: 0.88rem;
-    padding: 12px;
-    resize: vertical;
-    outline: none;
-  }
-</style>
-</head>
-
-<body>
-
-<div class="topbar">
-  <div class="title-block">
-    <h1>Bike Service Checklist</h1>
-    <p>Workshop Inspection &amp; Torque Specification Record</p>
-  </div>
-
-  <button class="btn-save" onclick="savePDF()">⬇ Save as PDF</button>
-</div>
-
-<div class="meta-grid">
-  <div class="meta-field">
-    <label>Client Name</label>
-    <input type="text" id="clientName" placeholder="Enter client name" />
-  </div>
-
-  <div class="meta-field">
-    <label>Bike Model</label>
-    <input type="text" id="bikeModel" placeholder="e.g. Trek Domane SL6" />
-  </div>
-
-  <div class="meta-field">
-    <label>Service By</label>
-    <input type="text" id="serviceBy" placeholder="Technician name" />
-  </div>
-
-  <div class="meta-field">
-    <label>Inspection Date</label>
-    <input type="date" id="inspDate" />
-  </div>
-</div>
-
-<div class="level-selector">
-  <span class="level-label">Service Level:</span>
-  <button class="level-btn" data-level="Level 1 — Service" onclick="setLevel(this)">Level 1 — Service</button>
-  <button class="level-btn" data-level="Level 2 — Service" onclick="setLevel(this)">Level 2 — Service</button>
-  <button class="level-btn active" data-level="Level 3 — Bike Assembly" onclick="setLevel(this)">Level 3 — Bike Assembly</button>
-</div>
-
-<div class="progress-bar-wrap">
-  <div class="progress-track">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
-  <div class="progress-text" id="progressText">0 / 0</div>
-</div>
-
-<div class="grid" id="checklistGrid"></div>
-
-<div class="notes-section">
-  <label>Additional Notes / Observations</label>
-  <textarea id="notes" placeholder="Enter any additional notes, observations, or follow-up actions here..."></textarea>
-</div>
-
-<script>
-const sections = [
-  {
-    title: "Torque Specifications",
-    items: [
-      { label: "Shifters", type: "check" },
-      { label: "Handlebar / Stem Bolts", type: "check" },
-      { label: "Stem Steerer", type: "check" },
-      { label: "Top Cap", type: "check" },
-      { label: "Saddle", type: "check" },
-      { label: "Seat Post", type: "check" },
-      { label: "Brake Caliper", type: "check" },
-      { label: "Rim Brake Pads", type: "check" },
-      { label: "Brake Pinch Bolts", type: "check" },
-      { label: "Pedals", type: "check" },
-      { label: "Thru Axles", type: "check" },
-      { label: "Cassette", type: "check" },
-      { label: "Rotors", type: "check" },
-      { label: "Front Derailleur Mount", type: "check" },
-      { label: "FD Cable Pinch Bolt", type: "check" },
-      { label: "Rear Derailleur Mount", type: "check" },
-      { label: "RD Cable Pinch Bolt", type: "check" },
-      { label: "RD Pulley Wheels", type: "check" },
-      { label: "Bottle Cage", type: "check" },
-      { label: "Crank Arm Bolt", type: "check" },
-      { label: "Chain Ring Bolts", type: "check" },
-      { label: "SRAM Preload Bolt", type: "check" }
-    ]
-  },
-  {
-    title: "Drive Train",
-    items: [
-      { label: "Limit Screws — Front", type: "check" },
-      { label: "Limit Screws — Rear", type: "check" },
-      { label: "Indexing — Front", type: "check" },
-      { label: "Indexing — Rear", type: "check" },
-      { label: "Chain Wear", type: "check" },
-      { label: "Chain Size", type: "input", placeholder: "e.g. 11s" },
-      { label: "Lubrication", type: "check" },
-      { label: "Crankset Play", type: "check" }
-    ]
-  },
-  {
-    title: "Brakes",
-    items: [
-      { label: "No Brake Rub", type: "check" },
-      { label: "No Brake Squeal", type: "check" },
-      { label: "Rim Brake Pads Toe-in", type: "check" },
-      { label: "Brake Pad Thickness — Front", type: "input", placeholder: "mm" },
-      { label: "Brake Pad Thickness — Rear", type: "input", placeholder: "mm" },
-      { label: "Rotor Thickness — Front", type: "input", placeholder: "mm" },
-      { label: "Rotor Thickness — Rear", type: "input", placeholder: "mm" }
-    ]
-  },
-  {
-    title: "Wheels",
-    items: [
-      { label: "No Lateral Play", type: "check" },
-      { label: "Tyre Pressure", type: "dual", labels: ["Front", "Rear"] },
-      { label: "Tyre Beads Seated", type: "check" },
-      { label: "Valves Tightened", type: "check" },
-      { label: "Lateral True Within 1–2 mm", type: "check" },
-      { label: "Tyre Direction", type: "check" }
-    ]
-  },
-  {
-    title: "Others",
-    items: [
-      { label: "Headset Play", type: "check" },
-      { label: "Cables Crimped", type: "check" },
-      { label: "Handlebar Alignment", type: "check" },
-      { label: "Saddle Alignment", type: "check" }
-    ]
-  }
-];
-
-let uid = 0;
-
-function render() {
-  const grid = document.getElementById("checklistGrid");
-  grid.innerHTML = "";
-  uid = 0;
-
-  sections.forEach((section, sectionIndex) => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <div class="card-header">${section.title}</div>
-      <div class="card-body"></div>
-    `;
-
-    const body = card.querySelector(".card-body");
-
-    section.items.forEach((item, itemIndex) => {
-      uid++;
-      const row = document.createElement("div");
-      row.className = "check-row";
-      row.dataset.section = sectionIndex;
-      row.dataset.item = itemIndex;
-
-      if (item.type === "check") {
-        row.innerHTML = `
-          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
-          <label class="row-label" for="chk_${uid}">${item.label}</label>
-        `;
-      }
-
-      if (item.type === "input") {
-        row.innerHTML = `
-          <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
-          <label class="row-label" for="chk_${uid}">${item.label}</label>
-          <input class="row-input" type="text" placeholder="${item.placeholder || ""}" />
-        `;
-      }
-
-      if (item.type === "dual") {
+render_anchor = '''      if (item.type === "dual") {
         const labels = item.labels || ["L", "R"];
         row.innerHTML = `
           <input class="chk tracker" type="checkbox" id="chk_${uid}" onchange="updateProgress()" />
@@ -493,36 +23,91 @@ function render() {
           </div>
         `;
       }
+'''
 
-      body.appendChild(row);
-    });
+render_replacement = render_anchor + '''
+      if (item.type === "passna") {
+        row.innerHTML = `
+          <label class="row-label">${item.label}</label>
+          <div class="passna-control" role="group" aria-label="${item.label} status">
+            <button type="button" class="status-btn pass-btn" data-status="PASS" onclick="setPassNaStatus(this)">PASS</button>
+            <button type="button" class="status-btn na-btn" data-status="N/A" onclick="setPassNaStatus(this)">N/A</button>
+          </div>
+        `;
+      }
+'''
 
-    grid.appendChild(card);
-  });
+html = html.replace(render_anchor, render_replacement)
 
-  document.getElementById("inspDate").valueAsDate = new Date();
-  updateProgress();
-}
+css_anchor = '''  .dual-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+'''
 
-function setLevel(button) {
+css_replacement = css_anchor + '''
+  .passna-control {
+    display: flex;
+    gap: 6px;
+  }
+
+  .status-btn {
+    min-width: 54px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+
+  .status-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .status-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  .status-btn.na-btn.active {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+'''
+
+html = html.replace(css_anchor, css_replacement)
+
+setlevel_anchor = '''function setLevel(button) {
   document.querySelectorAll(".level-btn").forEach(btn => btn.classList.remove("active"));
   button.classList.add("active");
 }
+'''
 
-function updateProgress() {
-  const all = document.querySelectorAll(".tracker");
-  const checked = document.querySelectorAll(".tracker:checked");
-  const percentage = all.length ? Math.round((checked.length / all.length) * 100) : 0;
+setlevel_replacement = setlevel_anchor + '''
+function setPassNaStatus(button) {
+  const control = button.closest(".passna-control");
+  const wasActive = button.classList.contains("active");
 
-  document.getElementById("progressFill").style.width = percentage + "%";
-  document.getElementById("progressText").textContent = `${checked.length} / ${all.length}`;
+  control.querySelectorAll(".status-btn").forEach(btn => btn.classList.remove("active"));
+
+  if (!wasActive) {
+    button.classList.add("active");
+  }
+
+  updateProgress();
 }
+'''
 
-function getChecklistData() {
-  return sections.map((section, sectionIndex) => {
-    const rows = document.querySelectorAll(`.check-row[data-section="${sectionIndex}"]`);
+html = html.replace(setlevel_anchor, setlevel_replacement)
 
-    const items = Array.from(rows).map((row, itemIndex) => {
+get_data_old = '''    const items = Array.from(rows).map((row, itemIndex) => {
       const checkbox = row.querySelector(".tracker");
       const inputs = Array.from(row.querySelectorAll(".row-input")).map(input => input.value.trim());
 
@@ -532,127 +117,69 @@ function getChecklistData() {
         values: inputs
       };
     });
+'''
 
-    return {
-      title: section.title,
-      items
-    };
-  });
+get_data_new = '''    const items = Array.from(rows).map((row, itemIndex) => {
+      const checkbox = row.querySelector(".tracker");
+      const inputs = Array.from(row.querySelectorAll(".row-input")).map(input => input.value.trim());
+      const activeStatus = row.querySelector(".status-btn.active");
+
+      return {
+        ...section.items[itemIndex],
+        checked: checkbox ? checkbox.checked : activeStatus?.dataset.status === "PASS",
+        status: activeStatus?.dataset.status || "",
+        values: inputs
+      };
+    });
+'''
+
+html = html.replace(get_data_old, get_data_new)
+
+progress_old = '''function updateProgress() {
+  const all = document.querySelectorAll(".tracker");
+  const checked = document.querySelectorAll(".tracker:checked");
+  const percentage = all.length ? Math.round((checked.length / all.length) * 100) : 0;
+
+  document.getElementById("progressFill").style.width = percentage + "%";
+  document.getElementById("progressText").textContent = `${checked.length} / ${all.length}`;
 }
+'''
 
-function drawCheckbox(pdf, x, y, size, checked) {
-  pdf.setDrawColor(65, 65, 65);
-  pdf.setLineWidth(0.25);
-  pdf.rect(x, y, size, size);
+progress_new = '''function updateProgress() {
+  const checkboxes = Array.from(document.querySelectorAll(".tracker"));
+  const passNaRows = Array.from(document.querySelectorAll(".passna-control"));
 
-  if (checked) {
-    pdf.setFillColor(232, 255, 71);
-    pdf.rect(x, y, size, size, "F");
+  const completedCheckboxes = checkboxes.filter(box => box.checked).length;
+  const completedPassNa = passNaRows.filter(control => control.querySelector(".status-btn.active")).length;
 
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(7);
-    pdf.text("X", x + size / 2, y + size - 0.7, { align: "center" });
-  }
+  const total = checkboxes.length + passNaRows.length;
+  const completed = completedCheckboxes + completedPassNa;
+  const percentage = total ? Math.round((completed / total) * 100) : 0;
+
+  document.getElementById("progressFill").style.width = percentage + "%";
+  document.getElementById("progressText").textContent = `${completed} / ${total}`;
 }
+'''
 
-function fitText(pdf, text, maxWidth, fontSize, minSize = 4.5) {
-  let size = fontSize;
-  pdf.setFontSize(size);
+html = html.replace(progress_old, progress_new)
 
-  while (pdf.getTextWidth(text) > maxWidth && size > minSize) {
-    size -= 0.25;
-    pdf.setFontSize(size);
-  }
-
-  return size;
-}
-
-function drawMetaField(pdf, label, value, x, y, width) {
-  pdf.setTextColor(110, 110, 110);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(5.5);
-  pdf.text(label.toUpperCase(), x, y);
-
-  pdf.setDrawColor(220, 220, 220);
-  pdf.setLineWidth(0.25);
-  pdf.line(x, y + 6.5, x + width, y + 6.5);
-
-  pdf.setTextColor(25, 25, 25);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
-  pdf.text(value || "—", x, y + 5);
-}
-
-function drawSectionCard(pdf, section, x, y, width, maxHeight) {
-  const headerHeight = 8;
-  const itemCount = section.items.length;
-  const availableRowsHeight = maxHeight - headerHeight;
-  const rowHeight = Math.min(7.2, availableRowsHeight / itemCount);
-  const cardHeight = headerHeight + rowHeight * itemCount;
-
-  pdf.setDrawColor(55, 55, 55);
-  pdf.setLineWidth(0.25);
-  pdf.rect(x, y, width, cardHeight);
-
-  pdf.setFillColor(35, 35, 35);
-  pdf.rect(x, y, width, headerHeight, "F");
-
-  pdf.setFillColor(232, 255, 71);
-  pdf.rect(x, y, width, 1.1, "F");
-
-  pdf.setTextColor(232, 255, 71);
-  pdf.setFont("helvetica", "bold");
-  fitText(pdf, section.title.toUpperCase(), width - 4, 7, 5.5);
-  pdf.text(section.title.toUpperCase(), x + 2, y + 5.5);
-
-  section.items.forEach((item, index) => {
-    const rowY = y + headerHeight + index * rowHeight;
-
-    if (index % 2 === 1) {
-      pdf.setFillColor(248, 248, 248);
-      pdf.rect(x, rowY, width, rowHeight, "F");
+reserve_old = '''    if (item.type === "dual") {
+      rightReserve = 26;
     }
+'''
 
-    pdf.setDrawColor(225, 225, 225);
-    pdf.line(x, rowY + rowHeight, x + width, rowY + rowHeight);
-
-    const boxSize = Math.min(3.4, rowHeight - 2);
-    drawCheckbox(pdf, x + 1.7, rowY + (rowHeight - boxSize) / 2, boxSize, item.checked);
-
-    let rightReserve = 2;
-
-    if (item.type === "input") {
-      rightReserve = 15;
-    }
-
-    if (item.type === "dual") {
+reserve_new = '''    if (item.type === "dual") {
       rightReserve = 26;
     }
 
-    const textX = x + 6.5;
-    const maxTextWidth = width - 6.5 - rightReserve;
-
-    pdf.setTextColor(30, 30, 30);
-    pdf.setFont("helvetica", "normal");
-    fitText(pdf, item.label, maxTextWidth, 5.8, 4.2);
-    pdf.text(item.label, textX, rowY + rowHeight / 2 + 1.5);
-
-    if (item.type === "input") {
-      const value = item.values[0] || "";
-      const valueX = x + width - 13;
-
-      pdf.setDrawColor(150, 150, 150);
-      pdf.line(valueX, rowY + rowHeight - 1.5, x + width - 1.5, rowY + rowHeight - 1.5);
-
-      if (value) {
-        pdf.setTextColor(20, 20, 20);
-        pdf.setFontSize(5.5);
-        pdf.text(value, x + width - 2, rowY + rowHeight / 2 + 1.5, { align: "right" });
-      }
+    if (item.type === "passna") {
+      rightReserve = 18;
     }
+'''
 
-    if (item.type === "dual") {
+html = html.replace(reserve_old, reserve_new)
+
+pdf_status_anchor = '''    if (item.type === "dual") {
       const front = item.values[0] || "";
       const rear = item.values[1] || "";
       const startX = x + width - 25;
@@ -683,182 +210,57 @@ function drawSectionCard(pdf, section, x, y, width, maxHeight) {
         pdf.text(rear, startX + 21.5, rowY + rowHeight / 2 + 1.4, { align: "right" });
       }
     }
-  });
-
-  return cardHeight;
-}
-
-async function savePDF() {
-  const button = document.querySelector(".btn-save");
-  button.disabled = true;
-  button.textContent = "⏳ Generating…";
-
-  try {
-    const { jsPDF } = window.jspdf;
-
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: "a4",
-      compress: true
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const marginX = 7;
-    const top = 7;
-
-    // White background
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(0, 0, pageWidth, pageHeight, "F");
-
-    // Main title
-    pdf.setTextColor(30, 30, 30);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(18);
-    pdf.text("BIKE SERVICE CHECKLIST", marginX, top + 7);
-
-    // Subtitle
-    pdf.setTextColor(95, 95, 95);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(7);
-    pdf.text(
-      "WORKSHOP INSPECTION & TORQUE SPECIFICATION RECORD",
-      marginX,
-      top + 12
-    );
-
-    // Accent line
-    pdf.setFillColor(232, 255, 71);
-    pdf.rect(marginX, top + 15, pageWidth - marginX * 2, 1.2, "F");
-
-    // Metadata
-    const clientName = document.getElementById("clientName").value.trim();
-    const bikeModel = document.getElementById("bikeModel").value.trim();
-    const serviceBy = document.getElementById("serviceBy").value.trim();
-    const inspectionDate = document.getElementById("inspDate").value;
-    const selectedLevel =
-      document.querySelector(".level-btn.active")?.dataset.level || "—";
-
-    const metaY = top + 22;
-    const metaGap = 5;
-    const metaWidth = (pageWidth - marginX * 2 - metaGap * 3) / 4;
-
-    drawMetaField(pdf, "Client Name", clientName, marginX, metaY, metaWidth);
-    drawMetaField(pdf, "Bike Model", bikeModel, marginX + (metaWidth + metaGap), metaY, metaWidth);
-    drawMetaField(pdf, "Service By", serviceBy, marginX + (metaWidth + metaGap) * 2, metaY, metaWidth);
-    drawMetaField(pdf, "Inspection Date", inspectionDate, marginX + (metaWidth + metaGap) * 3, metaY, metaWidth);
-
-    // Service level
-    const levelY = metaY + 13;
-    pdf.setTextColor(95, 95, 95);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(5.5);
-    pdf.text("SERVICE LEVEL", marginX, levelY);
-
-    pdf.setFillColor(232, 255, 71);
-    pdf.roundedRect(marginX + 24, levelY - 4.2, 48, 6, 1, 1, "F");
-
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont("helvetica", "bold");
-    fitText(pdf, selectedLevel.toUpperCase(), 44, 6, 5);
-    pdf.text(selectedLevel.toUpperCase(), marginX + 48, levelY, { align: "center" });
-
-    // Progress
-    const all = document.querySelectorAll(".tracker").length;
-    const checked = document.querySelectorAll(".tracker:checked").length;
-
-    pdf.setTextColor(95, 95, 95);
-    pdf.setFontSize(5.5);
-    pdf.text("PROGRESS", pageWidth - marginX - 33, levelY);
-
-    pdf.setTextColor(30, 30, 30);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(6.5);
-    pdf.text(`${checked} / ${all}`, pageWidth - marginX, levelY, { align: "right" });
-
-    const checklistData = getChecklistData();
-
-    const gridY = levelY + 5;
-    const notesHeight = 24;
-    const footerHeight = 7;
-    const gridMaxHeight = pageHeight - gridY - notesHeight - footerHeight - 4;
-
-    const gap = 2.5;
-    const availableWidth = pageWidth - marginX * 2 - gap * 4;
-
-    const ratios = [1.35, 1, 1, 1, 0.9];
-    const ratioTotal = ratios.reduce((sum, value) => sum + value, 0);
-    const widths = ratios.map(ratio => availableWidth * ratio / ratioTotal);
-
-    let x = marginX;
-
-    checklistData.forEach((section, index) => {
-      drawSectionCard(pdf, section, x, gridY, widths[index], gridMaxHeight);
-      x += widths[index] + gap;
-    });
-
-    // Notes section
-    const notesY = pageHeight - notesHeight - footerHeight;
-    const notes = document.getElementById("notes").value.trim();
-
-    pdf.setTextColor(90, 90, 90);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(5.5);
-    pdf.text("ADDITIONAL NOTES / OBSERVATIONS", marginX, notesY);
-
-    pdf.setDrawColor(90, 90, 90);
-    pdf.setLineWidth(0.3);
-    pdf.rect(marginX, notesY + 2, pageWidth - marginX * 2, notesHeight - 4);
-
-    if (notes) {
-      pdf.setTextColor(30, 30, 30);
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(6);
-      const noteLines = pdf.splitTextToSize(notes, pageWidth - marginX * 2 - 4);
-      pdf.text(noteLines.slice(0, 5), marginX + 2, notesY + 6);
-    }
-
-    // Footer
-    pdf.setTextColor(130, 130, 130);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(5);
-    pdf.text(
-      "Generated from Bike Service Checklist",
-      marginX,
-      pageHeight - 2.5
-    );
-
-    pdf.text(
-      "Technician Signature: ______________________________",
-      pageWidth - marginX,
-      pageHeight - 2.5,
-      { align: "right" }
-    );
-
-    const safeClient = (clientName || "checklist").replace(/[<>:"/\\|?*]/g, "_");
-    const safeDate = inspectionDate || "today";
-
-    pdf.save(`BikeChecklist_${safeClient}_${safeDate}.pdf`);
-  } catch (error) {
-    console.error(error);
-    alert("PDF generation failed: " + error.message);
-  } finally {
-    button.disabled = false;
-    button.textContent = "⬇ Save as PDF";
-  }
-}
-
-render();
-</script>
-
-</body>
-</html>
 '''
 
-path = "/mnt/data/bike-service-checklist-native-pdf.html"
-with open(path, "w", encoding="utf-8") as f:
-    f.write(html)
+pdf_status_replacement = pdf_status_anchor + '''
+    if (item.type === "passna") {
+      const status = item.status || "";
+      const statusX = x + width - 16;
+      const statusY = rowY + 1.2;
+      const statusW = 14;
+      const statusH = rowHeight - 2.4;
 
-print(path)
+      if (status === "PASS") {
+        pdf.setFillColor(232, 255, 71);
+        pdf.setDrawColor(232, 255, 71);
+        pdf.roundedRect(statusX, statusY, statusW, statusH, 0.8, 0.8, "FD");
+        pdf.setTextColor(0, 0, 0);
+      } else if (status === "N/A") {
+        pdf.setFillColor(255, 107, 53);
+        pdf.setDrawColor(255, 107, 53);
+        pdf.roundedRect(statusX, statusY, statusW, statusH, 0.8, 0.8, "FD");
+        pdf.setTextColor(255, 255, 255);
+      } else {
+        pdf.setDrawColor(150, 150, 150);
+        pdf.roundedRect(statusX, statusY, statusW, statusH, 0.8, 0.8);
+        pdf.setTextColor(110, 110, 110);
+      }
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(5);
+      pdf.text(status || "—", statusX + statusW / 2, rowY + rowHeight / 2 + 1.4, {
+        align: "center"
+      });
+    }
+'''
+
+html = html.replace(pdf_status_anchor, pdf_status_replacement)
+
+progress_pdf_old = '''    const all = document.querySelectorAll(".tracker").length;
+    const checked = document.querySelectorAll(".tracker:checked").length;
+'''
+
+progress_pdf_new = '''    const checkboxTotal = document.querySelectorAll(".tracker").length;
+    const checkboxCompleted = document.querySelectorAll(".tracker:checked").length;
+    const passNaControls = Array.from(document.querySelectorAll(".passna-control"));
+    const passNaCompleted = passNaControls.filter(control => control.querySelector(".status-btn.active")).length;
+
+    const all = checkboxTotal + passNaControls.length;
+    const checked = checkboxCompleted + passNaCompleted;
+'''
+
+html = html.replace(progress_pdf_old, progress_pdf_new)
+
+target.write_text(html, encoding="utf-8")
+
+print(target)
